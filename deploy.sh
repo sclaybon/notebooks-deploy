@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-source .env
+source polus-notebooks-hub-env.env
 
 # Backup file extension required to support Mac versions of sed
 sed -i.bak \
@@ -30,9 +30,9 @@ sed -i.bak \
     deploy/kubernetes/jupyterhub-deployment.yaml
 rm deploy/kubernetes/jupyterhub-deployment.yaml.bak
 
-sed -i.bak \
-    deploy/kubernetes/jupyterhub-services.yaml
-rm deploy/kubernetes/jupyterhub-services.yaml.bak
+# sed -i.bak \
+#     deploy/kubernetes/jupyterhub-services.yaml
+# rm deploy/kubernetes/jupyterhub-services.yaml.bak
 
 sed -i.bak \
     -e "s|JUPYTERHUB_URL_VALUE|${JUPYTERHUB_URL}|g" \

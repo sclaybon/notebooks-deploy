@@ -6,9 +6,9 @@ kind: PersistentVolumeClaim
 metadata:
   name: notebooks-pv-claim
 spec:
-  storageClassName: STORAGE_CLASS_VALUE
   accessModes:
   - ReadWriteMany
   resources:
     requests:
-      storage: SHARED_STORAGE_VALUE
+      storage: 5Gi
+  storageClassName: aws-efs

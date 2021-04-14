@@ -8,7 +8,7 @@ metadata:
   name: jupyterhub-ingress
 spec:
   rules:
-  - host: JUPYTERHUB_URL_VALUE
+  - host: polus-notebooks-hub.ci.aws.labshare.org
     http:
       paths:
       - backend:

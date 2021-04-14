@@ -3,7 +3,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: jupyterhub
-  namespace: default
+  namespace: polus-notebooks
 spec:
   type: NodePort
   ports:

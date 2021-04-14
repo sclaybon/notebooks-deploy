@@ -14,12 +14,12 @@ spec:
       labels:
         application: jupyterhub
       annotations:
-        configHash: CONFIG_HASH_VALUE
+        configHash: be924f808e96f9edecad92bf9d89eb12878f6d2b
     spec:
       serviceAccountName: jupyterhub-sa
       containers:
         - name: jupyterhub
-          image: labshare/jupyterhub:HUB_VERSION_VALUE
+          image: labshare/jupyterhub
           imagePullPolicy: Always
           ports:
             - containerPort: 8000
@@ -75,6 +75,8 @@ spec:
             - mountPath: /srv/jupyterhub/config/jupyterhub-config.py
               name: jupyterhub-config
               subPath: jupyterhub-config.py
+      imagePullSecrets:
+        - name: regcred
       volumes:
         - name: jupyterhub-config
           configMap:

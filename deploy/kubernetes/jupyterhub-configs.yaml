@@ -9,31 +9,24 @@ data:
 
 
     c = get_config()
+    #c.JupyterHub.spawner_class = 'kubespawner.KubeSpawner'
     c.JupyterHub.spawner_class = 'modularspawner.ModularSpawner'
-    c.ModularSpawner.start_timeout=1000
 
-    # Choose which stacks to use in modular spawner
-    c.ModularSpawner.stacks_path = '/stacks'
-    c.ModularSpawner.base = 'BASE_STACK_VALUE'
-    c.ModularSpawner.stacks = STACKS_VALUE
-    c.ModularSpawner.stacks_names = STACKS_NAMES_VALUE
+    c.KubeSpawner.image = 'labshare/polyglot-notebook:757f4f5cae7839f3865f0b1494b1967e7b15da0d73756a35cd8bf96ffb9aa551'
+    c.KubeSpawner.default_url = '/lab'
+    c.KubeSpawner.uid = 1000
+    c.KubeSpawner.cmd = ['jupyter-labhub']
+    c.KubeSpawner.working_dir = '/home/jovyan'
+    c.KubeSpawner.service_account = 'jupyteruser-sa'
 
-    # Which container to spawn
-    c.ModularSpawner.default_url = '/lab'
-    c.ModularSpawner.uid = 1000 #uid 1000 corresponds to jovyan, uid 0 to root
-    c.ModularSpawner.cmd = ['jupyter-labhub']
-    c.ModularSpawner.working_dir = '/home/jovyan'
-    c.ModularSpawner.service_account='jupyteruser-sa'
-
-    # Per-user storage configuration
-    c.ModularSpawner.pvc_name_template = 'claim-{username}'
-    c.ModularSpawner.storage_class = 'STORAGE_CLASS_VALUE'
-    c.ModularSpawner.storage_capacity = 'STORAGE_PER_USER_VALUE'
-    c.ModularSpawner.storage_access_modes = ['ReadWriteOnce']
-    c.ModularSpawner.storage_pvc_ensure = True
+    c.KubeSpawner.pvc_name_template = 'claim-{username}'
+    c.KubeSpawner.storage_class = 'aws-efs'
+    c.KubeSpawner.storage_capacity = '1Gi'
+    c.KubeSpawner.storage_access_modes = ['ReadWriteOnce']
+    c.KubeSpawner.storage_pvc_ensure = True
 
     # Volumes to attach to Pod
-    c.ModularSpawner.volumes = [
+    c.KubeSpawner.volumes = [
         {
             'name': 'volume-{username}',
             'persistentVolumeClaim': {
@@ -45,13 +38,57 @@ data:
             'persistentVolumeClaim': {
                 'claimName': 'notebooks-pv-claim'
             }
+        }
+    ]
+    # Where to mount volumes
+    c.KubeSpawner.volume_mounts = [
+        {
+            'mountPath': '/home/jovyan/work',
+            'name': 'volume-{username}'
         },
         {
-            'name': 'wipp-volume',
-            'persistentVolumeClaim': {
-                'claimName': 'WIPP_STORAGE_PVC_VALUE'
-            }
+            'mountPath': '/opt/shared/notebooks',
+            'name': 'shared-volume'
         }
+    ]
+
+
+    c.ModularSpawner.start_timeout=1000
+
+    # Choose which stacks to use in modular spawner
+    c.ModularSpawner.stacks_path = '/stacks'
+    c.ModularSpawner.base = 'base.yaml'
+    c.ModularSpawner.stacks = [['Python-datascience.yaml','Python-dataviz.yaml'],['R.yaml'],['octave.yaml'],['java.yaml','scala.yaml'],['cpp.yaml'],['bash.yaml'],['tensorflow.yaml','pytorch.yaml','fastai.yaml']]
+    c.ModularSpawner.stacks_names = ['Python Datascience','R','Octave','Java+Scala','C++','Bash','Python Deep Learning']
+
+    # Which container to spawn
+    c.ModularSpawner.default_url = '/lab'
+    c.ModularSpawner.uid = 1000 #uid 1000 corresponds to jovyan, uid 0 to root
+    c.ModularSpawner.cmd = ['jupyter-labhub']
+    c.ModularSpawner.working_dir = '/home/jovyan'
+    c.ModularSpawner.service_account='jupyteruser-sa'
+
+    # Per-user storage configuration
+    c.ModularSpawner.pvc_name_template = 'claim-{username}'
+    c.ModularSpawner.storage_class = 'aws-efs'
+    c.ModularSpawner.storage_capacity = '1Gi'
+    c.ModularSpawner.storage_access_modes = ['ReadWriteOnce']
+    c.ModularSpawner.storage_pvc_ensure = True
+
+    # Volumes to attach to Pod
+    c.ModularSpawner.volumes = [
+    {
+        'name': 'volume-{username}',
+        'persistentVolumeClaim': {
+            'claimName': 'claim-{username}'
+        }
+    },
+    {
+        'name': 'shared-volume',
+        'persistentVolumeClaim': {
+            'claimName': 'notebooks-pv-claim'
+        }
+    }
     ]
 
     # Where to mount volumes
@@ -63,10 +100,6 @@ data:
         {
             'mountPath': '/opt/shared/notebooks',
             'name': 'shared-volume'
-        },
-        {
-            'mountPath': '/opt/shared/wipp',
-            'name': 'wipp-volume'
         }
     ]
 
@@ -88,7 +121,6 @@ data:
     c.JupyterHub.authenticator_class = LocalGenericOAuthenticator
 
     c.Authenticator.admin_users = set(ADMIN_USERS.split(';'))
-
     c.LocalGenericOAuthenticator.client_id = OAUTH_CLIENT_ID
     c.LocalGenericOAuthenticator.client_secret = OAUTH_CLIENT_SECRET
     c.LocalGenericOAuthenticator.username_key = "email"
@@ -101,9 +133,9 @@ data:
 
     # Set up WIPP UI url for integration with WIPP
     c.ModularSpawner.environment = {
-        'WIPP_UI_URL': 'WIPP_UI_VALUE',
-        'WIPP_API_INTERNAL_URL': 'WIPP_API_INTERNAL_VALUE',
-        'WIPP_NOTEBOOKS_PATH': 'WIPP_NOTEBOOKS_PATH_VALUE'
+        'WIPP_UI_URL': 'https://wipp-ui.ci.aws.labshare.org/',
+        'WIPP_API_INTERNAL_URL': 'http://wipp-backend:8080/api',
+        'WIPP_NOTEBOOKS_PATH': '/opt/shared/wipp/temp/notebooks'
     }
 
     # Service to shutdown inactive Notebook servers after --timeout seconds
@@ -114,4 +146,5 @@ data:
             'command': [sys.executable, '/srv/jupyterhub/config/cull-idle-servers.py', '--timeout=3600'],
         }
     ]
+
 ---
