@@ -1,0 +1,17 @@
+name: 
+env:
+  - 
+apt:
+  - 
+conda_channels:
+  - 
+conda:
+  - 
+pip:
+  - 
+labextensions:
+  - 
+scripts:
+  - 
+addfiles:
+  - 

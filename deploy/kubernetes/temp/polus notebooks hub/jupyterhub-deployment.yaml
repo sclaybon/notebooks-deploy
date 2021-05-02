@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jupyterhub
+  labels:
+    application: jupyterhub
+spec:
+  selector:
+    matchLabels:
+      application: jupyterhub
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        application: jupyterhub
+      annotations:
+        configHash: be924f808e96f9edecad92bf9d89eb12878f6d2b
+    spec:
+      serviceAccountName: jupyterhub-sa
+      containers:
+        - name: jupyterhub
+          image: swazonic/labshare-jupyterhub
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+              # This name will be used in the Service.
+              name: jupyter-http
+            - containerPort: 8081
+              # This name will be used in the Service.
+              name: jupyter-in
+          command: [
+            "jupyterhub",
+            "-f",
+            "/srv/jupyterhub/config/jupyterhub-config.py",
+            "--debug"
+          ]
+          env:
+            - name: OAUTH_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: jupyterhub-auth-config
+                  key: client_id
+            - name: OAUTH_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: jupyterhub-auth-config
+                  key: client_secret
+            - name: TENANT
+              valueFrom:
+                secretKeyRef:
+                  name: jupyterhub-auth-config
+                  key: tenant
+            - name: AUTH_URL
+              valueFrom:
+                secretKeyRef:
+                  name: jupyterhub-auth-config
+                  key: auth_url
+            - name: OAUTH_CALLBACK_URL
+              valueFrom:
+                secretKeyRef:
+                  name: jupyterhub-auth-config
+                  key: oauth_callback_url
+            - name: ADMIN_USERS
+              valueFrom:
+                secretKeyRef:
+                  name: jupyterhub-auth-config
+                  key: admin_users
+            - name: OAUTH2_AUTHORIZE_URL
+              value: "$(AUTH_URL)/auth/$(TENANT)/authorize"
+            - name: OAUTH2_TOKEN_URL
+              value: "$(AUTH_URL)/auth/$(TENANT)/oidc/token"
+            - name: OAUTH2_USERDATA_URL
+              value: "$(AUTH_URL)/auth/me"
+          volumeMounts:
+            - mountPath: /srv/jupyterhub/config/jupyterhub-config.py
+              name: jupyterhub-config
+              subPath: jupyterhub-config.py
+      imagePullSecrets:
+        - name: regcred
+      volumes:
+        - name: jupyterhub-config
+          configMap:
+              name: jupyterhub-config
+              items:
+              - key: jupyterhub-config.py
+                path: jupyterhub-config.py

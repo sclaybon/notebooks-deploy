@@ -48,6 +48,9 @@ class ModularSpawner(KubeSpawner):
             options = [True] * len(self.stacks)
             tag = subprocess.run(('railyard hash ' + '-b ' + self.base + ''.join([f' -a {item}' for stack,included in zip(self.stacks,options) for item in stack if included])).split(' '), capture_output=True).stdout.decode("utf-8").rstrip()
         
+
+        #use the latest tag
+        tag = '1fc49911c19915d7381bfc80b4f8ce9be661c757336b61915cd4bab5ed5624cb'
         # Get full image tag
         image = 'labshare/polyglot-notebook:' + tag
 
